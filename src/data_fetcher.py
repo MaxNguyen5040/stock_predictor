@@ -13,3 +13,9 @@ def fetch_stock_data(ticker, start_date, end_date):
     df = stock.history(start=start_date, end=end_date)
     df = clean_stock_data(df)
     return df
+
+def fetch_multiple_stocks(tickers, start_date, end_date):
+    data = {}
+    for ticker in tickers:
+        data[ticker] = fetch_stock_data(ticker, start_date, end_date)
+    return data
