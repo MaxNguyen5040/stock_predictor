@@ -5,8 +5,11 @@ import cachetools.func
 
 def clean_stock_data(df):
     df.dropna(inplace=True)
+    df = df[df['Volume'] > 0]
     df['Date'] = df.index
     df.reset_index(drop=True, inplace=True)
+    df['SMA_50'] = df['Close'].rolling(window=50).mean()
+    df['SMA_200'] = df['Close'].rolling(window=200).mean()
     return df
 
 def fetch_stock_data(ticker, start_date, end_date):
