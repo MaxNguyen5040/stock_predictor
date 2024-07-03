@@ -3,6 +3,10 @@ from flask_login import LoginManager, UserMixin, login_user, login_required, log
 from src.data_fetcher import fetch_stock_data
 import plotly.express as px
 import plotly.io as pio
+from flask_sqlalchemy import SQLAlchemy
+
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'
+db = SQLAlchemy(app)
 
 app = Flask(__name__)
 app.secret_key = 'supersecretkey'
@@ -10,7 +14,7 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
 
-users = {'user1': {'password': 'password1'}, 'user2': {'password': 'password2'}}
+users = {'MaxNguyen': {'password': 'password123'}, 'OtherUser': {'password': 'password2345'}}
 
 class User(UserMixin):
     def __init__(self, username):
@@ -93,3 +97,28 @@ def get_stock_data():
     end_date = request.args.get('end_date')
     df = fetch_stock_data(ticker, start_date, end_date)
     return df.to_json()
+
+class User(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(80), unique=True, nullable=False)
+    password = db.Column(db.String(200), nullable=False)
+    stock_data = db.relationship('StockData', backref='user', lazy=True)
+
+class StockData(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    ticker = db.Column(db.String(10), nullable=False)
+    data = db.Column(db.Text, nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+
+db.create_all()
+
+@app.route('/save_stock_data', methods=['POST'])
+@login_required
+def save_stock_data():
+    ticker = request.form['ticker']
+    data = request.form['data']
+    stock_data = StockData(ticker=ticker, data=data, user_id=current_user.id)
+    db.session.add(stock_data)
+    db.session.commit()
+    flash('Stock data saved successfully!')
+    return redirect(url_for('stock_data'))

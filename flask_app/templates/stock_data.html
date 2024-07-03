@@ -22,6 +22,11 @@
     </form>
     {% if graph_html %}
         <div>{{ graph_html|safe }}</div>
+        <form method="POST" action="{{ url_for('save_stock_data') }}">
+            <input type="hidden" name="ticker" value="{{ request.form['ticker'] }}">
+            <input type="hidden" name="data" value="{{ graph_html|tojson }}">
+            <button type="submit">Save Data</button>
+        </form>
     {% endif %}
 </body>
 </html>
