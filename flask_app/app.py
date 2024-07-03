@@ -79,11 +79,31 @@ def register():
         return redirect(url_for('login'))
     return render_template('register.html')
 
+@app.route('/reset_password', methods=['GET', 'POST'])
+@login_required
+def reset_password():
+    if request.method == 'POST':
+        current_user.set_password(request.form['new_password'])
+        db.session.commit()
+        flash('Password updated successfully!')
+        return redirect(url_for('profile'))
+    return render_template('reset_password.html')
 
-@app.route('/profile')
+@app.route('/verify_email/<token>')
+def verify_email(token):
+    # Implementation for email verification
+    pass
+
+@app.route('/profile', methods=['GET', 'POST'])
 @login_required
 def profile():
-    return render_template('profile.html', username=current_user.id)
+    if request.method == 'POST':
+        current_user.username = request.form['username']
+        current_user.email = request.form['email']
+        db.session.commit()
+        flash('Profile updated successfully!')
+        return redirect(url_for('profile'))
+    return render_template('profile.html', user=current_user)
 
 @app.route('/stock_data', methods=['POST'])
 @login_required
