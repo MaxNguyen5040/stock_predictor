@@ -1,5 +1,8 @@
 from flask import Flask, render_template, redirect, url_for, request, flash, session
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
+from src.data_fetcher import fetch_stock_data
+import plotly.express as px
+import plotly.io as pio
 
 app = Flask(__name__)
 app.secret_key = 'supersecretkey'
@@ -69,3 +72,24 @@ def register():
 @login_required
 def profile():
     return render_template('profile.html', username=current_user.id)
+
+@app.route('/stock_data', methods=['GET', 'POST'])
+@login_required
+def stock_data():
+    if request.method == 'POST':
+        ticker = request.form['ticker']
+        start_date = request.form['start_date']
+        end_date = request.form['end_date']
+        df = fetch_stock_data(ticker, start_date, end_date)
+        fig = px.line(df, x='Date', y='Close', title=f'{ticker} Stock Prices')
+        graph_html = pio.to_html(fig, full_html=False)
+        return render_template('stock_data.html', graph_html=graph_html)
+    return render_template('stock_data.html')
+
+@app.route('/get_stock_data')
+def get_stock_data():
+    ticker = request.args.get('ticker')
+    start_date = request.args.get('start_date')
+    end_date = request.args.get('end_date')
+    df = fetch_stock_data(ticker, start_date, end_date)
+    return df.to_json()
