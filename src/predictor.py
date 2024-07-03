@@ -1,6 +1,15 @@
 import pandas as pd
 from data_fetcher import fetch_stock_data
 from model_trainer import train_models
+from sklearn.model_selection import train_test_split
+
+def train_models(ticker, start_date, end_date):
+    # Your data fetching and preprocessing logic here
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+    model = LinearRegression()
+    model.fit(X_train, y_train)
+    return model, X_test, y_test
+
 
 def predict_future_prices(ticker, start_date, end_date, days_ahead):
     trained_models, _, _ = train_models(ticker, start_date, end_date)
