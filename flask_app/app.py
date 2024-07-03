@@ -6,6 +6,7 @@ import plotly.io as pio
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash
 from models import User, db
+from flask_mail import Mail, Message
 
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'
 db = SQLAlchemy(app)
@@ -171,3 +172,36 @@ def save_stock_data():
 def view_saved_data():
     user_stock_data = StockData.query.filter_by(user_id=current_user.id).all()
     return render_template('view_saved_data.html', stock_data=user_stock_data)
+
+app.config['MAIL_SERVER'] = 'smtp.example.com'
+app.config['MAIL_PORT'] = 587
+app.config['MAIL_USE_TLS'] = True
+app.config['MAIL_USERNAME'] = 'maxnguyen3012@gmail.com'
+app.config['MAIL_PASSWORD'] = 'password1234578910'
+
+mail = Mail(app)
+
+def send_email(subject, sender, recipients, text_body, html_body):
+    msg = Message(subject, sender=sender, recipients=recipients)
+    msg.body = text_body
+    msg.html = html_body
+    mail.send(msg)
+
+@app.route('/notify_price_change', methods=['POST'])
+@login_required
+def notify_price_change():
+    ticker = request.form['ticker']
+    price_threshold = float(request.form['price_threshold'])
+    # Fetch current stock price
+    current_price = fetch_current_stock_price(ticker)
+    if current_price < price_threshold:
+        subject = f'{ticker} Price Alert'
+        sender = 'admin@example.com'
+        recipients = [current_user.email]
+        text_body = f'Current price of {ticker} is below your threshold: {current_price}'
+        html_body = f'<p>Current price of {ticker} is below your threshold: {current_price}</p>'
+        send_email(subject, sender, recipients, text_body, html_body)
+        flash(f'Email alert sent for {ticker} price change!')
+    else:
+        flash(f'No alert sent, {ticker} price is above the threshold.')
+    return redirect(url_for('stock_data'))
