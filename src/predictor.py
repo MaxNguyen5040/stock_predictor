@@ -2,6 +2,18 @@ import pandas as pd
 from data_fetcher import fetch_stock_data
 from model_trainer import train_models
 from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LinearRegression
+import numpy as np
+
+def predict_future_prices(trained_model, start_date, end_date, days_ahead):
+    # Generate future dates
+    future_dates = pd.date_range(start=start_date, periods=days_ahead+1).tolist()[-days_ahead:]
+
+    future_features = np.arange(len(future_dates)).reshape(-1, 1)
+
+    predicted_prices = trained_model.predict(future_features)
+
+    return future_dates, predicted_prices
 
 def train_models(ticker, start_date, end_date):
     # Your data fetching and preprocessing logic here

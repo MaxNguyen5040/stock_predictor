@@ -55,5 +55,27 @@ def update_graph(n_clicks, ticker, start_date, end_date, days_ahead):
 
     return fig, fig_volume, fig_prediction
 
+@app.callback(
+    Output('output-graphs', 'children'),
+    [Input('predict-button', 'n_clicks')],
+    [State('ticker-input', 'value'),
+     State('date-picker-range', 'start_date'),
+     State('date-picker-range', 'end_date')]
+)
+def update_graph(n_clicks, ticker, start_date, end_date):
+    if n_clicks is None:
+        return None
+
+    trained_model, _, _ = train_models(ticker, start_date, end_date)
+    future_dates, predicted_prices = predict_future_prices(trained_model, start_date, end_date, days_ahead=30)
+
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(x=future_dates, y=predicted_prices, mode='lines+markers', name='Predicted Prices'))
+
+    return dcc.Graph(
+        id='predicted-prices-graph',
+        figure=fig
+    )
+
 if __name__ == '__main__':
     app.run_server(debug=True)

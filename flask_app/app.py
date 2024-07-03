@@ -122,3 +122,9 @@ def save_stock_data():
     db.session.commit()
     flash('Stock data saved successfully!')
     return redirect(url_for('stock_data'))
+
+@app.route('/view_saved_data')
+@login_required
+def view_saved_data():
+    user_stock_data = StockData.query.filter_by(user_id=current_user.id).all()
+    return render_template('view_saved_data.html', stock_data=user_stock_data)
