@@ -10,6 +10,14 @@ def plot_stock_data(df, ticker):
                       yaxis_title='Price')
     fig.show()
 
+    # Plot volume data in a separate subplot
+    fig_volume = go.Figure()
+    fig_volume.add_trace(go.Bar(x=df['Date'], y=df['Volume'], name='Volume'))
+    fig_volume.update_layout(title=f'{ticker} Trading Volume',
+                             xaxis_title='Date',
+                             yaxis_title='Volume')
+    fig_volume.show()
+
 def plot_multiple_stocks(data):
     fig = go.Figure()
     for ticker, df in data.items():
