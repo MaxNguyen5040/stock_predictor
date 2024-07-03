@@ -4,6 +4,8 @@ from src.data_fetcher import fetch_stock_data
 import plotly.express as px
 import plotly.io as pio
 from flask_sqlalchemy import SQLAlchemy
+from werkzeug.security import generate_password_hash
+from models import User, db
 
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'
 db = SQLAlchemy(app)
@@ -20,6 +22,11 @@ class User(UserMixin):
     def __init__(self, username):
         self.id = username
 
+@app.route('/stock_data')
+@login_required
+def stock_data():
+    return render_template('stock_data.html')
+
 @login_manager.user_loader
 def load_user(user_id):
     if user_id not in users:
@@ -31,13 +38,13 @@ def login():
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
-        if username in users and users[username]['password'] == password:
-            user = User(username)
+        user = User.query.filter_by(username=username).first()
+        if user and check_password_hash(user.password, password):
             login_user(user)
             flash('Login successful!')
             return redirect(url_for('index'))
         else:
-            flash('Invalid credentials!')
+            flash('Invalid username or password.')
     return render_template('login.html')
 
 @app.route('/logout')
@@ -64,31 +71,32 @@ def register():
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
-        if username in users:
-            flash('Username already exists!')
-        else:
-            users[username] = {'password': generate_password_hash(password)}
-            flash('Registration successful! Please log in.')
-            return redirect(url_for('login'))
+        hashed_password = generate_password_hash(password)
+        new_user = User(username=username, password=hashed_password)
+        db.session.add(new_user)
+        db.session.commit()
+        flash('Registration successful! Please log in.')
+        return redirect(url_for('login'))
     return render_template('register.html')
+
 
 @app.route('/profile')
 @login_required
 def profile():
     return render_template('profile.html', username=current_user.id)
 
-@app.route('/stock_data', methods=['GET', 'POST'])
+@app.route('/stock_data', methods=['POST'])
 @login_required
 def stock_data():
-    if request.method == 'POST':
-        ticker = request.form['ticker']
-        start_date = request.form['start_date']
-        end_date = request.form['end_date']
-        df = fetch_stock_data(ticker, start_date, end_date)
-        fig = px.line(df, x='Date', y='Close', title=f'{ticker} Stock Prices')
-        graph_html = pio.to_html(fig, full_html=False)
-        return render_template('stock_data.html', graph_html=graph_html)
-    return render_template('stock_data.html')
+    ticker = request.form['ticker']
+    start_date = request.form['start_date']
+    end_date = request.form['end_date']
+    # Fetch stock data
+    df = fetch_stock_data(ticker, start_date, end_date)
+    # Create plot
+    fig = px.line(df, x='Date', y='Close', title=f'{ticker} Stock Prices')
+    graph_html = pio.to_html(fig, full_html=False)
+    return render_template('stock_data.html', graph_html=graph_html)
 
 @app.route('/get_stock_data')
 def get_stock_data():
