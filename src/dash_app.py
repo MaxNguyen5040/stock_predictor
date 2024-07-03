@@ -4,6 +4,7 @@ from dash.dependencies import Input, Output
 from data_fetcher import fetch_stock_data
 from plotter import plot_stock_data
 from predictor import predict_future_prices
+from model_trainer import train_models
 import plotly.graph_objects as go
 
 app = dash.Dash(__name__)
@@ -19,17 +20,19 @@ app.layout = html.Div([
     html.Button('Submit', id='submit-button', n_clicks=0),
     dcc.Graph(id='stock-graph'),
     dcc.Graph(id='volume-graph'),
-    dcc.Graph(id='prediction-graph')
+    dcc.Graph(id='prediction-graph'),
+    html.Div(id='model-performance')
 ])
 
 @app.callback(
-    [Output('stock-graph', 'figure'), Output('volume-graph', 'figure'), Output('prediction-graph', 'figure')],
+    [Output('stock-graph', 'figure'), Output('volume-graph', 'figure'), Output('prediction-graph', 'figure'), Output('model-performance', 'children')],
     [Input('submit-button', 'n_clicks')],
     [Input('ticker-input', 'value'), Input('date-picker', 'start_date'), Input('date-picker', 'end_date'), Input('days-ahead', 'value')]
 )
 def update_graph(n_clicks, ticker, start_date, end_date, days_ahead):
     df = fetch_stock_data(ticker, start_date, end_date)
     future_df = predict_future_prices(ticker, start_date, end_date, days_ahead)
+    trained_models, X_test, y_test, performance = train_models(ticker, start_date, end_date)
 
     fig = go.Figure()
     fig.add_trace(go.Scatter(x=df['Date'], y=df['Close'], mode='lines', name='Close Price'))
@@ -53,7 +56,9 @@ def update_graph(n_clicks, ticker, start_date, end_date, days_ahead):
                                  xaxis_title='Date',
                                  yaxis_title='Predicted Close Price')
 
-    return fig, fig_volume, fig_prediction
+    performance_text = "Model Performance (Mean Squared Error):\n" + "\n".join([f"{name}: {mse:.2f}" for name, mse in performance.items()])
+
+    return fig, fig_volume, fig_prediction, performance_text
 
 if __name__ == '__main__':
     app.run_server(debug=True)
