@@ -1,9 +1,9 @@
 import pandas as pd
 from data_fetcher import fetch_stock_data
-from model_trainer import train_model
+from model_trainer import train_models
 
 def predict_future_prices(ticker, start_date, end_date, days_ahead):
-    model, _, _ = train_model(ticker, start_date, end_date)
+    trained_models, _, _ = train_models(ticker, start_date, end_date)
     last_date = pd.to_datetime(end_date)
     future_dates = [last_date + pd.Timedelta(days=i) for i in range(1, days_ahead+1)]
     future_dates_ordinal = [date.toordinal() for date in future_dates]
@@ -18,8 +18,13 @@ def predict_future_prices(ticker, start_date, end_date, days_ahead):
         'Day': future_days
     })
 
-    predictions = model.predict(future_features)
-    future_data = pd.DataFrame({'Date': future_dates, 'Predicted_Close': predictions})
+    predictions = {}
+    for name, model in trained_models.items():
+        predictions[name] = model.predict(future_features)
+    
+    future_data = pd.DataFrame({'Date': future_dates})
+    for name, pred in predictions.items():
+        future_data[f'Predicted_Close_{name}'] = pred
 
     return future_data
 

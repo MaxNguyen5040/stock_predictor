@@ -46,7 +46,9 @@ def update_graph(n_clicks, ticker, start_date, end_date, days_ahead):
                              yaxis_title='Volume')
 
     fig_prediction = go.Figure()
-    fig_prediction.add_trace(go.Scatter(x=future_df['Date'], y=future_df['Predicted_Close'], mode='lines', name='Predicted Close Price'))
+    for column in future_df.columns:
+        if 'Predicted_Close' in column:
+            fig_prediction.add_trace(go.Scatter(x=future_df['Date'], y=future_df[column], mode='lines', name=column))
     fig_prediction.update_layout(title=f'{ticker} Predicted Prices for Next {days_ahead} Days',
                                  xaxis_title='Date',
                                  yaxis_title='Predicted Close Price')
