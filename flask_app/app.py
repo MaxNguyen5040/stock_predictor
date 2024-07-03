@@ -47,3 +47,25 @@ def index():
 
 if __name__ == '__main__':
     app.run(debug=True)
+
+from werkzeug.security import generate_password_hash, check_password_hash
+
+users = {}
+
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+        if username in users:
+            flash('Username already exists!')
+        else:
+            users[username] = {'password': generate_password_hash(password)}
+            flash('Registration successful! Please log in.')
+            return redirect(url_for('login'))
+    return render_template('register.html')
+
+@app.route('/profile')
+@login_required
+def profile():
+    return render_template('profile.html', username=current_user.id)
