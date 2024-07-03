@@ -7,8 +7,11 @@ def train_model(ticker, start_date, end_date):
     df = fetch_stock_data(ticker, start_date, end_date)
     df['Date'] = pd.to_datetime(df['Date'])
     df['Date_ordinal'] = df['Date'].apply(lambda date: date.toordinal())
+    df['Year'] = df['Date'].dt.year
+    df['Month'] = df['Date'].dt.month
+    df['Day'] = df['Date'].dt.day
 
-    X = df[['Date_ordinal']]
+    X = df[['Date_ordinal', 'Year', 'Month', 'Day']]
     y = df['Close']
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)

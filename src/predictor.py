@@ -7,8 +7,18 @@ def predict_future_prices(ticker, start_date, end_date, days_ahead):
     last_date = pd.to_datetime(end_date)
     future_dates = [last_date + pd.Timedelta(days=i) for i in range(1, days_ahead+1)]
     future_dates_ordinal = [date.toordinal() for date in future_dates]
+    future_years = [date.year for date in future_dates]
+    future_months = [date.month for date in future_dates]
+    future_days = [date.day for date in future_dates]
 
-    predictions = model.predict(pd.DataFrame(future_dates_ordinal, columns=['Date_ordinal']))
+    future_features = pd.DataFrame({
+        'Date_ordinal': future_dates_ordinal,
+        'Year': future_years,
+        'Month': future_months,
+        'Day': future_days
+    })
+
+    predictions = model.predict(future_features)
     future_data = pd.DataFrame({'Date': future_dates, 'Predicted_Close': predictions})
 
     return future_data
