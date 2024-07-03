@@ -79,6 +79,21 @@ def register():
         return redirect(url_for('login'))
     return render_template('register.html')
 
+@app.route('/analyze_data')
+@login_required
+def analyze_data():
+    user_stock_data = StockData.query.filter_by(user_id=current_user.id).all()
+    
+    # Perform data analysis
+    data_frames = []
+    for data in user_stock_data:
+        df = pd.read_json(data.data)
+        # Example analysis: calculate average closing price
+        avg_close_price = np.mean(df['Close'])
+        data_frames.append({'ticker': data.ticker, 'avg_close_price': avg_close_price})
+    
+    return render_template('analyze_data.html', analysis=data_frames)
+
 @app.route('/reset_password', methods=['GET', 'POST'])
 @login_required
 def reset_password():
