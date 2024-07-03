@@ -19,3 +19,10 @@ def fetch_multiple_stocks(tickers, start_date, end_date):
     for ticker in tickers:
         data[ticker] = fetch_stock_data(ticker, start_date, end_date)
     return data
+
+def clean_stock_data(df):
+    df.dropna(inplace=True)
+    df = df[df['Volume'] > 0]  # Filter out days with no trading volume
+    df['Date'] = df.index
+    df.reset_index(drop=True, inplace=True)
+    return df
